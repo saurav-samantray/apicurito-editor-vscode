@@ -1,12 +1,18 @@
 {
 	"compilerOptions": {
 		"module": "commonjs",
-		"target": "es6",
+		"target": "es2022",
 		"outDir": "dist",
-		"lib": ["es6", "dom"],
+		"lib": ["es2020", "dom"],
 		"sourceMap": true,
 		"rootDir": ".",
 		"strict": true,
+		"paths": {
+      		// This is solely to stop a bug with @types/node as of 12/15/2023
+			"undici-types": [
+				"./node_modules/undici-types/index.d.ts"
+			],
+		}
 	},
 	"include": [
 		"src-ext"

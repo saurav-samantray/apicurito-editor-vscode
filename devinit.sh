@@ -1,6 +1,6 @@
 #!/bin/sh
 
-yarn install
+#yarn install
 mkdir -p src/config
 
 cat <<EOF > src/config/config.js

@@ -16,12 +16,15 @@
  */
 
 import {Component} from '@angular/core';
-import {ApiDefinition} from 'apicurio-design-studio';
+import {ApiDefinition} from "./editor/_models/api.model";
 import {WindowRef} from './services/window-ref.service';
 import {AppInfoService} from "./services/app-info.service";
 import {VscodeExtensionService} from './services/vscode-extension.service';
 import * as YAML from 'js-yaml';
 import {ApiFileEncoding} from "./editor/api-file-encoding.type";
+import { EditingInfo } from './components/models/editingInfo.model';
+import { ConfigService } from './services/config.service';
+import { LoggerService } from './services/logger.service';
 
 declare var acquireVsCodeApi: any;
 declare var window: any;
@@ -29,21 +32,31 @@ declare var window: any;
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
-    styleUrls: ['./app.component.css']
+    styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
 
     helpExpanded: boolean = false;
 
-    apiDef: ApiDefinition = null;
+    api: ApiDefinition = null;
+    isShowLoading: boolean = true;
+    isShowEditor: boolean = false;
+    isShowError: boolean = false;
     encoding: ApiFileEncoding = ApiFileEncoding.JSON; // default to JSON
+    config: EditingInfo;
 
     private vscode: VscodeExtensionService;
 
-    constructor(private winRef: WindowRef, public appInfo: AppInfoService, vscode: VscodeExtensionService) {
+    constructor(private logger: LoggerService, private configService: ConfigService, private winRef: WindowRef, public appInfo: AppInfoService, vscode: VscodeExtensionService) {
         this.vscode = vscode;
         this.vscode.addMessageHandler("open", message => {
             this.openEditor(message.data);
+        });
+
+        configService.get("OPENAPI").then(cfg => {
+            this.config = cfg;
+        }).catch(error => {
+            this.logger.error("Failed to get editor configuration: %o", error);
         });
     }
 
@@ -52,13 +65,16 @@ export class AppComponent {
     }
 
     public openEditor(content: any): void {
-        this.apiDef = new ApiDefinition();
-        this.apiDef.createdBy = 'user';
-        this.apiDef.createdOn = new Date();
-        this.apiDef.tags = [];
-        this.apiDef.description = '';
-        this.apiDef.id = 'api-1';
-        this.apiDef.spec = this.parseContent(content);
+        this.api = new ApiDefinition();
+        this.api.createdBy = 'user';
+        this.api.createdOn = new Date();
+        this.api.tags = [];
+        this.api.description = '';
+        this.api.id = 'api-1';
+        this.api.type = "OpenAPI30";
+        this.api.spec = this.parseContent(content);
+        this.isShowLoading = false;
+            this.isShowEditor = true;
     }
 
     /**

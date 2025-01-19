@@ -1,12 +1,24 @@
-.app-body {
-  grid-column-start: m;
-  grid-column-end: k;
-  grid-row-start: m;
-  grid-row-end: k;
-  background-color: white;
-  position: relative;
+.editor-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 
-.pf-c-page .pf-c-page__header {
-  background-color: #151515;
+.editor-loading .loading-label {
+  font-size: 16px;
+}
+
+.studio-editor {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.studio-editor > .content-editor {
+  flex-grow: 1;
 }

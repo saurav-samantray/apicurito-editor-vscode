@@ -17,7 +17,7 @@
 
 import {BrowserModule} from '@angular/platform-browser';
 import {NgModule} from '@angular/core';
-import {ApicurioCommonComponentsModule, ApicurioEditorModule} from 'apicurio-design-studio';
+//import {ApicurioCommonComponentsModule, ApicurioEditorModule} from 'apicurio-design-studio';
 
 import {AppComponent} from './app.component';
 import { BsDropdownModule } from 'ngx-bootstrap/dropdown';
@@ -25,15 +25,19 @@ import { ModalModule } from 'ngx-bootstrap/modal';
 import {FormsModule} from '@angular/forms';
 import {WindowRef} from './services/window-ref.service';
 import {EmptyStateComponent} from "./empty/empty-state.component";
-import {EditorComponent} from "./editor/editor.component";
 import {DownloaderService} from "./services/downloader.service";
 import {HttpClientModule} from "@angular/common/http";
 import {AppInfoService} from './services/app-info.service';
 import {ConfigService} from './services/config.service';
 import {StorageService} from "./services/storage.service";
-import {ConfigureValidationComponent} from "./editor/configure-validation.dialog";
+//import {ConfigureValidationComponent} from "./editor/configure-validation.dialog";
 import { VscodeExtensionService } from './services/vscode-extension.service';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
+import {LoggerService} from "./services/logger.service"
+import {ApicurioEditorModule} from "./editor.module";
+import {AsyncApiEditorComponent} from "./components/editors/asyncapi-editor.component";
+import {OpenApiEditorComponent} from "./components/editors/openapi-editor.component";
 
 @NgModule({
     imports: [
@@ -41,7 +45,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
         FormsModule,
         HttpClientModule,
         ApicurioEditorModule,
-        ApicurioCommonComponentsModule,
         ModalModule.forRoot(),
         BsDropdownModule.forRoot(),
         BrowserAnimationsModule
@@ -49,10 +52,10 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     declarations: [
         AppComponent,
         EmptyStateComponent,
-        EditorComponent,
-        ConfigureValidationComponent
+        OpenApiEditorComponent,
+        AsyncApiEditorComponent
     ],
-    providers: [WindowRef, AppInfoService, ConfigService, DownloaderService, StorageService, VscodeExtensionService],
+    providers: [WindowRef, AppInfoService, LoggerService, ConfigService, DownloaderService, StorageService, VscodeExtensionService],
     bootstrap: [AppComponent]
 })
 export class AppModule {

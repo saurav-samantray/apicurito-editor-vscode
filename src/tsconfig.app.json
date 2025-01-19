@@ -1,11 +1,25 @@
+/* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/app",
     "baseUrl": "./",
-    "module": "es2015",
-    "types": []
+    "module": "es2020",
+    "types": [],
+    "paths": {
+      // This is solely to stop a bug with @types/node as of 12/15/2023
+      "undici-types": [
+        "../node_modules/undici-types/index.d.ts"
+      ],
+    }
   },
+  "files": [
+    "main.ts",
+    "polyfills.ts"
+  ],
+  "include": [
+    "**/*.d.ts"
+  ],
   "exclude": [
     "test.ts",
     "**/*.spec.ts"
