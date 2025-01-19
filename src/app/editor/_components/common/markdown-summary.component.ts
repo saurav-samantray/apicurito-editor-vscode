@@ -54,7 +54,16 @@ export class MarkdownSummaryComponent implements OnChanges {
     }
 
     public isEmpty(): boolean {
-        return this.data === null || this.data === undefined || this.data.trim().length === 0;
+        if(this.data === null || this.data === undefined) {
+            return true;
+        } else {
+            if (typeof this.data === "string") {
+                return this.data?.trim().length === 0;
+            } else {
+                return false;
+            }
+        }
+        //return this.data === null || this.data === undefined || this.data?.trim().length === 0;
     }
 
 }

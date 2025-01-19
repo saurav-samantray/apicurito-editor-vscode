@@ -445,6 +445,7 @@ export class OaiEditorComponent extends AbstractApiEditorComponent implements On
      * @param path
      */
     private updateFormDisplay(path: string): void {
+        console.log("[OAIEditorComponent] updateFormDisplay(): Path - "+path);
         let npath: NodePath = new NodePath(path);
         let visitor: FormSelectionVisitor = new FormSelectionVisitor(this.document().is2xDocument() ? "20" : "30");
         npath.resolveWithVisitor(this.document(), visitor);

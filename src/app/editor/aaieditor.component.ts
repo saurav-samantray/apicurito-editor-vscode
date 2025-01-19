@@ -260,7 +260,7 @@ export class AaiEditorComponent extends AbstractApiEditorComponent implements On
             }
             this.validateModel();
             let sourceJs: any = Library.writeNode(this._document);
-            this.sourceValue = YAML.safeDump(sourceJs, {
+            this.sourceValue = YAML.dump(sourceJs, {
                 indent: 4,
                 lineWidth: 110,
                 noRefs: true
@@ -442,6 +442,7 @@ export class AaiEditorComponent extends AbstractApiEditorComponent implements On
      * @param path
      */
     private updateFormDisplay(path: string): void {
+        console.log("[AAIEditorComponent] updateFormDisplay(): Path - "+path);
         let npath: NodePath = new NodePath(path);
 
         let visitor: FormSelectionVisitor = new FormSelectionVisitor("20");

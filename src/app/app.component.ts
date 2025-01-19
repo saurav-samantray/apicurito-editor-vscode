@@ -49,14 +49,19 @@ export class AppComponent {
 
     constructor(private logger: LoggerService, private configService: ConfigService, private winRef: WindowRef, public appInfo: AppInfoService, vscode: VscodeExtensionService) {
         this.vscode = vscode;
+        let type = "OPENAPI";
         this.vscode.addMessageHandler("open", message => {
             this.openEditor(message.data);
-        });
-
-        configService.get("OPENAPI").then(cfg => {
-            this.config = cfg;
-        }).catch(error => {
-            this.logger.error("Failed to get editor configuration: %o", error);
+            const spec = this.parseContent(message.data);
+            if(spec?.asyncapi !== null && spec?.asyncapi !== undefined) {
+                this.logger.info("[AppComponent] ASYNCAPI file detected. Setting config type to ASYNCAPI");
+                type = "ASYNCAPI";
+            }
+            configService.get(type).then(cfg => {
+                this.config = cfg;
+            }).catch(error => {
+                this.logger.error("Failed to get editor configuration: %o", error);
+            });
         });
     }
 
@@ -102,7 +107,7 @@ export class AppComponent {
 
         if (rval == null) {
             try {
-                rval = YAML.safeLoad(content);
+                rval = YAML.load(content);
                 this.encoding = ApiFileEncoding.YAML;
             } catch (e) {}
         }
@@ -110,7 +115,6 @@ export class AppComponent {
         if (rval == null) {
             console.warn("Failed to parse content!");
         }
-
         return rval;
     }
 
