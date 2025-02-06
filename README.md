@@ -19,7 +19,7 @@ Currently, Apicurito does not preserve the whitespace formatting of the edited J
 
 # Build (Debug)
 
-Open the project directory in the terminal. and run `yarn install` and then `yarn compile`.
+Open the project directory in the terminal. and run `npm install` and then `npm run compile`.
 
 Open the project directory in the VS Code, and press `F5`.
 

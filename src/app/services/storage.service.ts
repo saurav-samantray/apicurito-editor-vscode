@@ -56,6 +56,18 @@ export class StorageService {
     }
 
     /**
+     * fetch a external reference.
+     */
+    public recoverExtRef(ref: String): any {
+        let content: string = this.window.window.localStorage.getItem(API_DEF_KEY);
+        if (!content) {
+            return null;
+        }
+        let def: ApiDefinition = JSON.parse(content);
+        return def.extRefs.find(extRef => extRef.path === ref).content;
+    }
+
+    /**
      * Clears any definition from local storage - should be called when the user
      * intentionally closes the editor or downloads the API definition.
      */

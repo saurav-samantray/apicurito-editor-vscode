@@ -17,6 +17,10 @@
 	"include": [
 		"src-ext"
 	],
-	"exclude": ["node_modules", ".vscode-test"]
+	"exclude": ["node_modules", ".vscode-test"],
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+	"allowSyntheticDefaultImports": true
+  }
 }
 

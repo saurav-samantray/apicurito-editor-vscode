@@ -20,18 +20,34 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 
 
+export class ADTConfig {
+    public modelFolders: string[];
+
+    // constructor(modelFolders: string[]) {
+    //     this.modelFolders = modelFolders;
+    // }
+
+    constructor(obj : any) {
+        this.modelFolders = obj["modelFolders"];
+    }
+}
+
 export class VscodeMessage {
 
     public type: string;
     public data: any;
+    public workspacePath: string;
+    public extRefs: any[];
 
-    constructor(type: string, data: any) {
+    constructor(type: string, data: any, extRefs: any[], workspacePath: string) {
         this.type = type;
         this.data = data;
+        this.extRefs = extRefs;
+        this.workspacePath = workspacePath;
     }
 
-    public static Ready(data?: string) { return new VscodeMessage("ready", data ? data : null); }
-    public static Alert(data: string) { return new VscodeMessage("alert", data); }
+    public static Ready(data?: string, workspacePath?: string) { return new VscodeMessage("ready", data ? data : null, [], workspacePath ? workspacePath : ""); }
+    public static Alert(data: string, workspacePath: string) { return new VscodeMessage("alert", data, [], workspacePath); }
 }
 
 
@@ -41,7 +57,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (node && node.fsPath) {
                 const filePath = node.fsPath;
                 ApicuritoPanelContainer.get(context).createOrShow(filePath);
-            }            
+            }
         })
     );
 }
@@ -62,7 +78,7 @@ class ApicuritoPanelContainer {
     }
 
     public static get(context: vscode.ExtensionContext) {
-        if(!this.instance) {
+        if (!this.instance) {
             this.instance = new ApicuritoPanelContainer(context.extensionPath);
         }
         return this.instance;
@@ -116,7 +132,7 @@ class ApicuritoPanel {
             column,
             {
                 enableScripts: true,
-                localResourceRoots: [ vscode.Uri.file(path.join(this._extensionPath, buildDir)) ],
+                localResourceRoots: [vscode.Uri.file(path.join(this._extensionPath, buildDir))],
                 retainContextWhenHidden: true
             });
 
@@ -125,7 +141,22 @@ class ApicuritoPanel {
         this._panel.onDidDispose(() => this.container.dispose(this), null, []);
 
         this._panel.webview.onDidReceiveMessage(rawMessage => {
+            const workingDirPath : string = vscode.workspace.rootPath!;
             let message: VscodeMessage = rawMessage;
+
+            let adtConfig: ADTConfig;
+
+            //Make reading this file optional
+            fs.readFile(path.join(workingDirPath, "./.vscode/apicurio-config.json"), {encoding: "utf-8"}, (err, data) => {
+                if (err) {
+                    vscode.window.showErrorMessage(`[Apicurio Extension] Unable to read adt configuration`);
+                } else {
+                    console.log(`[Apicurio Extension] [ready]successfully read apicurio-config.json: ${data}`);
+                    adtConfig = new ADTConfig(JSON.parse(data));
+                    console.log(`[Apicurio Extension] [ready]adtConfig Object: ${JSON.stringify(adtConfig)}`);
+                }
+            });
+
             switch (message.type) {
                 case 'alert':
                     vscode.window.showErrorMessage(message.data);
@@ -135,16 +166,35 @@ class ApicuritoPanel {
                         if (err) {
                             vscode.window.showErrorMessage(`Error: ${err}`);
                         } else {
-                            let m = new VscodeMessage("open", data);
-                            this.sendMessage(m);
+                            console.log(`[Apicurio Extension] [ready] vscode.workspace ${JSON.stringify(workingDirPath)}`);
+                            const extRefs : any[] = this.allNodes(JSON.parse(data), "$ref", []);
+                            
+                            //read all the configured mode folders for JSON and yaml. Logic should be improved to filter only DMs
+                            if(adtConfig) {
+                                const models = adtConfig.modelFolders
+                                    .map(folder => this.fetchModelsFromFolder(workingDirPath, folder, []));
+                                console.log(`All the fetched models: ${JSON.stringify(models)}`);
+                                vscode.window.showInformationMessage(`Successfully read all model folders`);
+
+                            }
+                                console.log(`[Apicurio Extension] [ready] extRefs: ${JSON.stringify(extRefs)}`);
+                                let m = new VscodeMessage("open", data, extRefs, workingDirPath!);
+                                this.sendMessage(m);
                         }
                     });
                     return;
                 case 'save-req':
+                    console.log(`[Extension] save-req recieved from webview. Saving file ${this.filePath}`);
                     fs.writeFile(this.filePath, message.data, (err) => {
-                        vscode.window.showInformationMessage(`Saved "${this.getFilePath()}"`);
-                        this.sendMessage(new VscodeMessage("save-res", null));
-                      });
+                        console.log(`[Apicurio Extension] [save-req] vscode.workspace ${JSON.stringify(workingDirPath)}`);
+                        vscode.window.showInformationMessage(`${this.filePath} saved successfully`);
+                        this.sendMessage(new VscodeMessage("save-res", null,  [], ""));
+                    });
+                    return;
+                case 'read-local':
+                    console.log(`[Extension] read-local recieved from webview. reading file ${message.data}`);
+                    const absPath = "c:\\workspace\\apicurio\\example";
+                    fs.readFileSync(path.join(workingDirPath, message.data), {encoding: "utf-8"})
                     return;
             }
         }, null, []);
@@ -157,6 +207,33 @@ class ApicuritoPanel {
 
     public dispose() {
         this._panel.dispose();
+    }
+
+    private allNodes(obj: any, key: string, array: any[]) : any[] {
+        array = array || [];
+        if ('object' === typeof obj) {
+            for (let k in obj) {
+                if (k === key && obj[k].startsWith("./")) {
+                    const fileContent = fs.readFileSync(path.join(vscode.workspace.rootPath!, obj[k]), "utf-8");
+                    array.push({path: obj[k], content: fileContent});
+                } else {
+                    this.allNodes(obj[k], key, array);
+                }
+            }
+        }
+        return array;
+    }
+
+    private fetchModelsFromFolder(workingDirPath: string, dir: string, array: any[]) : any[] {
+        array = array || [];
+        fs.readdirSync(path.join(workingDirPath,dir)).forEach(file => {
+            let fullPath = path.join(workingDirPath, dir, file);
+            if (fs.lstatSync(fullPath).isDirectory()) {
+                return this.fetchModelsFromFolder(workingDirPath, fullPath, array);
+            }  
+            array.push({name: file, path: path.join(dir, file)});
+          });
+        return array;
     }
 
     private _getHtmlForWebview() {

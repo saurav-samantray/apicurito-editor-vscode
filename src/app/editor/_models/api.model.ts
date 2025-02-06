@@ -42,10 +42,12 @@ export class Api {
 export class ApiDefinition extends Api {
 
     spec: any;
+    extRefs: any[]
 
     constructor() {
         super();
         this.spec = {};
+        this.extRefs = [];
     }
 
     public static fromApi(api: Api): ApiDefinition {

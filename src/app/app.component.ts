@@ -25,6 +25,7 @@ import {ApiFileEncoding} from "./editor/api-file-encoding.type";
 import { EditingInfo } from './components/models/editingInfo.model';
 import { ConfigService } from './services/config.service';
 import { LoggerService } from './services/logger.service';
+import { StorageService } from './services/storage.service';
 
 declare var acquireVsCodeApi: any;
 declare var window: any;
@@ -46,12 +47,15 @@ export class AppComponent {
     config: EditingInfo;
 
     private vscode: VscodeExtensionService;
+    private storage: StorageService;
 
-    constructor(private logger: LoggerService, private configService: ConfigService, private winRef: WindowRef, public appInfo: AppInfoService, vscode: VscodeExtensionService) {
+    constructor(private logger: LoggerService, private configService: ConfigService, private winRef: WindowRef, public appInfo: AppInfoService, vscode: VscodeExtensionService, storage: StorageService) {
         this.vscode = vscode;
+        this.storage = storage;
         let type = "OPENAPI";
         this.vscode.addMessageHandler("open", message => {
-            this.openEditor(message.data);
+            this.logger.info(`[AppComponent]: open event : extRefs: ${JSON.stringify(message.extRefs)}`)
+            this.openEditor(message.data, message.extRefs);
             const spec = this.parseContent(message.data);
             if(spec?.asyncapi !== null && spec?.asyncapi !== undefined) {
                 this.logger.info("[AppComponent] ASYNCAPI file detected. Setting config type to ASYNCAPI");
@@ -69,7 +73,7 @@ export class AppComponent {
         this.vscode.apicuritoReady();
     }
 
-    public openEditor(content: any): void {
+    public openEditor(content: any, extRefs: any[]): void {
         this.api = new ApiDefinition();
         this.api.createdBy = 'user';
         this.api.createdOn = new Date();
@@ -77,9 +81,11 @@ export class AppComponent {
         this.api.description = '';
         this.api.id = 'api-1';
         this.api.type = "OpenAPI30";
+        this.api.extRefs = extRefs;
         this.api.spec = this.parseContent(content);
         this.isShowLoading = false;
             this.isShowEditor = true;
+        this.storage.store(this.api);
     }
 
     /**

@@ -19,6 +19,8 @@ import {Injectable} from "@angular/core";
 import {Topic} from "apicurio-ts-core";
 import {CombinedAllNodeVisitor, Document, Library, Node, TraverserDirection} from "@apicurio/data-models";
 import * as YAML from 'js-yaml';
+import { VscodeExtensionService } from '../../services/vscode-extension.service';
+import { StorageService } from "../../services/storage.service";
 
 
 /**
@@ -35,13 +37,43 @@ export class ApiCatalogService {
     private readonly changeTopic: Topic<any>;
     private fetchCounter: number = 0;
     private fetcher: (externalReference: string) => Promise<any>;
+    private vscode: VscodeExtensionService;
+    private storage: StorageService;
 
     /**
      * Constructor.
      */
-    constructor() {
+    constructor(vscode: VscodeExtensionService, storage: StorageService) {
+        this.vscode = vscode;
+        this.storage = storage;
         this.apiCache = {};
         this.changeTopic = new Topic();
+        this.fetcher = async function fetchExternalData(externalReference: string): Promise<any> {
+            try {
+                // const fileAbsPath = this.join(this.vscode._workspacePath,externalReference);
+                // console.log(`[ApiCatalogService] Reading external reference: ${fileAbsPath}`);
+
+              // Validate the input
+              if (!externalReference) {
+                throw new Error("[ApiCatalogService] External reference cannot be empty.");
+              }
+          
+              // fetch the external file content
+              const content = this.storage.recoverExtRef(externalReference);
+              //console.log(`[ApiCatalogService] Fetched content from storage: [ref: ${externalReference}] = [content: ${content}]`);
+          
+              if (!content) {
+                throw new Error(`[ApiCatalogService] Failed to fetch content for ${externalReference}`);
+              }
+              //console.log("[ApiCatalogService] external file "+externalReference+", content: "+JSON.stringify(content));
+              //return content;
+              return new Promise<string>((resolve) => {
+                resolve(content);
+            });
+            } catch (error) {
+              console.error("[ApiCatalogService] Error fetching external data:", error);
+            }
+          }
     }
 
     /**
@@ -145,6 +177,7 @@ export class ApiCatalogService {
         console.info("[ApiCatalogService] Fetching external resource at: ", externalRef);
         // Use the fetcher to fetch the content (if we have one).
         if (this.fetcher) {
+            console.info("[ApiCatalogService] Fetcher has been configured. Using it to resolve ext ref ");
             this.fetcher(externalRef).then( content => {
                 console.debug("[ApiCatalogService] Successfully fetched external content:");
                 content = this.parseContent(content);
@@ -215,6 +248,13 @@ export class ApiCatalogService {
         } else {
             return null;
         }
+    }
+
+    private join(workspacePath: string, fileRelativePath: string): string {
+        const absPath = workspacePath.replace(/\\\\/g, '\\');
+        const relPath = fileRelativePath.replace("./", '\\');
+
+        return absPath + relPath;
     }
 }
 

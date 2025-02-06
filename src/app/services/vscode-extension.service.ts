@@ -25,14 +25,18 @@ export class VscodeMessage {
 
     public type: string;
     public data: any;
+    public workspacePath: string;
+    public extRefs: any[];
 
-    constructor(type: string, data: any) {
+    constructor(type: string, data: any, extRefs: any[], workspacePath: string) {
         this.type = type;
         this.data = data;
+        this.extRefs = extRefs;
+        this.workspacePath = workspacePath;
     }
 
-    public static Ready(data?: string) { return new VscodeMessage("ready", data ? data : null); }
-    public static Alert(data: string) { return new VscodeMessage("alert", data); }
+    public static Ready(data?: string, workspacePath?: string) { return new VscodeMessage("ready", data ? data : null, [], workspacePath ? workspacePath : ""); }
+    public static Alert(data: string, workspacePath: string) { return new VscodeMessage("alert", data, [], workspacePath); }
 }
 
 export interface Dictionary<T> {
@@ -52,11 +56,14 @@ export class VscodeExtensionService {
 
     private _messageHandlers: Dictionary<MessageHandler[]> = {};
 
+    private _workspacePath: string;
+
     constructor(private window: WindowRef) {
 
         window.window.addEventListener('message', (event: any) => {
             console.debug("Incoming event: ", event);
-            let message = new VscodeMessage(event.data.type, event.data.data);
+            let message = new VscodeMessage(event.data.type, event.data.data, event.data.extRefs, event.data.workspacePath);
+            this._workspacePath = event.data.workspacePath;
             let handlers = this._messageHandlers[message.type];
             if(handlers && handlers.length > 0) {
                 for(let handler of handlers) {

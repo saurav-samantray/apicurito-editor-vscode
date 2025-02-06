@@ -258,6 +258,13 @@ export class DefinitionFormComponent extends SourceFormComponent<OasSchema> {
                 }
             }
         }
+        else if (this.definition.$ref && this.definition.$ref.startsWith("./")) {
+            console.log(`[DefinationFormComponent] Fetching content for external reference: ${this.definition.$ref}`);
+            let content: any = this.catalog.lookup(this.definition.$ref);
+            if (content) {
+                    return JSON.stringify(content, null, 3);
+            }
+        }
         return "Content not available.";
     }
 

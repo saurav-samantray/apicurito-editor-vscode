@@ -86,7 +86,7 @@ export class EmptyStateComponent {
             } else {
                 try {
                     //jsObj = YAML.parse(content);
-                    jsObj = YAML.safeLoad(content);
+                    jsObj = YAML.load(content);
                     me.onOpen.emit(jsObj);
                 } catch (e) {
                     console.error("Error parsing file.", e);
